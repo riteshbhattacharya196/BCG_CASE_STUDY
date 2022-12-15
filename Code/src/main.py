@@ -78,7 +78,6 @@ class CarCrashAnalysis:
         utils.write_output(vehmake_ids_contributing_to_injuries_df,output_file_path,output_file_format)
         return ([a[0] for a in vehmake_ids_contributing_to_injuries_df.select('VEH_MAKE_ID').collect()])
     
-    #For all the body styles involved in crashes, mention the top ethnic user group of each unique body style  
     def top_ethnic_user_group(self,output_file_path,output_file_format):
       '''Finds and show top ethnic user group of each unique body style that was involved in crashes
         param output_file_path: output file path
