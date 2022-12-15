@@ -8,7 +8,7 @@ import sys
 if os.path.exists('src.zip'):
     os.path.insert(0,'src.zip')
 else:
-    os.path.insert(0,'./src/utilities')
+    os.path.insert(0,'./utilities')
 
 
 class CarCrashAnalysis:
