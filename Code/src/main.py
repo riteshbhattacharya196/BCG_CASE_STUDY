@@ -33,7 +33,6 @@ class CarCrashAnalysis:
         utils.write_output(count_killed_male_persons_df,output_file_path,output_file_format)
         return(count_killed_male_persons_df.count()) 
     
-    #Count of two-wheelers are booked for crashes
     def  count_two_wheelers_crash(self,output_file_path,output_file_format):
 
       '''Finds the crashes where the vehicle type was 2 wheeler.
