@@ -22,24 +22,35 @@ class CarCrashAnalysis:
        self.restrict_df=utils.load_data(spark,input_file_path.get('Restrict_use'))
        self.units_df=utils.load_data(spark,input_file_path.get('Units_use'))
     
-    #Count the number of male persons killed
     def count_killed_male_persons(self,output_file_path,output_file_format):
+      '''Finds the crashes (accidents) in which number of persons killed are male
+        param output_file_path: output file path
+        param output_file_format: output file format
+        return: Dataframe Count'''
         
         count_killed_male_persons_df=self.primary_person_df.filter(F.col('PRSN_GNDR_ID')=='MALE')
         count_killed_male_persons_df=count_killed_male_persons_df.dropDuplicates()
         utils.write_output(count_killed_male_persons_df,output_file_path,output_file_format)
-        print(count_killed_male_persons_df.count()) 
+        return(count_killed_male_persons_df.count()) 
     
     #Count of two-wheelers are booked for crashes
     def  count_two_wheelers_crash(self,output_file_path,output_file_format):
+
+      '''Finds the crashes where the vehicle type was 2 wheeler.
+        param output_file_path: output file path
+        param output_file_format: output file format
+        return: Dataframe Count'''
         
         count_two_wheelers_crash_df=self.units_df.filter(F.col('VEH_BODY_STYL_ID').contains('MOTORCYCLE'))
         count_two_wheelers_crash_df=count_two_wheelers_crash_df.dropDuplicates()
         utils.write_output(count_two_wheelers_crash_df,output_file_path,output_file_format)
-        print(count_two_wheelers_crash_df.count())
+        return(count_two_wheelers_crash_df.count())
 
-    #State has highest number of accidents in which females are involved
     def  state_with_highest_female_casualties(self,output_file_path,output_file_format):
+     '''Finds state name with highest female accidents
+        param output_file_path: output file path
+        param output_file_format: output file format
+        return: State Name with Highest Female Accidents'''
 
         state_with_highest_female_casualties_df=self.primary_person_df.filter(F.col('PRSN_GNDR_ID')=='FEMALE')
         state_with_highest_female_casualties_df=state_with_highest_female_casualties_df.groupBy('DRVR_LIC_STATE_ID')\
@@ -47,10 +58,14 @@ class CarCrashAnalysis:
         state_with_highest_female_casualties_df=state_with_highest_female_casualties_df.orderBy(F.col('count').desc())   
        
         utils.write_output(state_with_highest_female_casualties_df,output_file_path,output_file_format)
-        print (state_with_highest_female_casualties_df.first()['DRVR_LIC_STATE_ID'])
+        return (state_with_highest_female_casualties_df.first()['DRVR_LIC_STATE_ID'])
     
-    #Top 5th to 15th VEH_MAKE_IDs that contribute to a largest number of injuries including death
+    
     def vehmake_ids_contributing_to_injuries(self,output_file_path,output_file_format):
+     '''Finds Top 5th to 15th VEH_MAKE_IDs that contribute to a largest number of injuries including death
+        param output_file_path: output file path
+        param output_file_format: output file format
+        return: List of Top 5th to 15th VEH_MAKE_IDs that contribute to a largest number of injuries including death'''
         
         vehmake_ids_contributing_to_injuries_df=self.units_df.filter(F.col('VEH_MAKE_ID')!='NA')
         vehmake_ids_contributing_to_injuries_df=vehmake_ids_contributing_to_injuries_df.withColumn('Total_Casualties',F.col('TOT_INJRY_CNT')+F.col('DEATH_CNT'))
@@ -61,11 +76,15 @@ class CarCrashAnalysis:
         
         vehmake_ids_contributing_to_injuries_df=vehmake_ids_contributing_to_injuries_df.dropDuplicates()
         utils.write_output(vehmake_ids_contributing_to_injuries_df,output_file_path,output_file_format)
-        print ([a[0] for a in vehmake_ids_contributing_to_injuries_df.select('VEH_MAKE_ID').collect()])
+        return ([a[0] for a in vehmake_ids_contributing_to_injuries_df.select('VEH_MAKE_ID').collect()])
     
     #For all the body styles involved in crashes, mention the top ethnic user group of each unique body style  
     def top_ethnic_user_group(self,output_file_path,output_file_format):
-        
+      '''Finds and show top ethnic user group of each unique body style that was involved in crashes
+        param output_file_path: output file path
+        param output_file_format: output file format
+        return: Dataframe with Top Ethnic User Group of Each Unique Body Style '''
+
         filter_primary_person_df=self.primary_person_df.filter(~F.col('PRSN_ETHNICITY_ID').isin(['NA', 'UNKNOWN']))
         filter_units_df=self.units_df.filter(~F.col('VEH_BODY_STYL_ID').isin(['NA', 'UNKNOWN', 'NOT REPORTED','OTHER  (EXPLAIN IN NARRATIVE)']))
         join_df=filter_primary_person_df.join(filter_units_df,on='CRASH_ID',how='inner')
@@ -76,10 +95,14 @@ class CarCrashAnalysis:
         
         top_ethnic_user_group_df=top_ethnic_user_group_df.dropDuplicates()
         utils.write_output(top_ethnic_user_group_df,output_file_path,output_file_format)
-        print (top_ethnic_user_group_df.show(truncate=False))
+        return (top_ethnic_user_group_df.show(truncate=False))
 
-    #Among the crashed cars, what are the Top 5 Zip Codes with highest number crashes with alcohols as the contributing factor to a crash (Use Driver Zip Code)
     def zip_code_with_alocohol_as_factor(self,output_file_path,output_file_format):
+     '''Finds top 5 Zip Codes with the highest number crashes with alcohols as the contributing factor to a crash
+        param output_file_path: output file path
+        param output_file_format: output file format
+        return: List of Zip Codes'''
+        
         filter_units_df=self.units_df.filter((F.col('CONTRIB_FACTR_1_ID').contains('ALCOHOL')) | (F.col('CONTRIB_FACTR_2_ID').contains('ALCOHOL')))
         filter_primary_person_df=self.primary_person_df.dropna(subset='DRVR_ZIP')
         join_df=filter_primary_person_df.join(filter_units_df,on='CRASH_ID',how='inner')
@@ -88,10 +111,15 @@ class CarCrashAnalysis:
         
         zip_code_with_alocohol_as_factor_df=zip_code_with_alocohol_as_factor_df.dropDuplicates()
         utils.write_output(zip_code_with_alocohol_as_factor_df,output_file_path,output_file_format)
-        print ([a[0] for a in zip_code_with_alocohol_as_factor_df.select('DRVR_ZIP').collect()])
+        return ([a[0] for a in zip_code_with_alocohol_as_factor_df.select('DRVR_ZIP').collect()])
 
-    #Count of Distinct Crash IDs where No Damaged Property was observed and Damage Level (VEH_DMAG_SCL~) is above 4 and car avails Insurance
+
     def vehicle_with_no_damaged_property(self,output_file_path,output_file_format):
+    ''' Counts Distinct Crash IDs where No Damaged Property was observed and Damage Level (VEH_DMAG_SCL~) is above 4 and car avails Insurance.
+        param output_file_path: output file path
+        param output_file_format: output file format
+        return: Count of Distinct Crash ids'''
+
         filter_units_df=self.units_df.filter(((F.col('VEH_DMAG_SCL_1_ID')>'DAMAGED 4') & (~F.col('VEH_DMAG_SCL_1_ID').isin(['NA', 'NO DAMAGE', 'INVALID VALUE']))) |
                                             ((F.col('VEH_DMAG_SCL_2_ID')>'DAMAGED 4') & (~F.col('VEH_DMAG_SCL_2_ID').isin(['NA', 'NO DAMAGE', 'INVALID VALUE']))))\
                                             .filter(F.col('FIN_RESP_TYPE_ID') == 'PROOF OF LIABILITY INSURANCE')
@@ -102,11 +130,16 @@ class CarCrashAnalysis:
 
         utils.write_output(vehicle_with_no_damaged_property_df,output_file_path,output_file_format)
         count=vehicle_with_no_damaged_property_df.select(F.countDistinct('CRASH_ID')).collect()[0][0]
-        print(count)
+        return(count)
    
-    # Determine the Top 5 Vehicle Makes/Brands where drivers are charged with speeding related offences, has licensed
-    # Drivers, uses top 10 used vehicle colours and has car licensed with the Top 25 states with highest number of offences (to be deduced from the data)
     def top_vehicle_brands(self,output_file_path,output_file_format):
+     '''Determines the Top 5 Vehicle Makes/Brands where drivers are charged with speeding related offences, has licensed
+        Drivers, uses top 10 used vehicle colours and has car licensed with the Top 25 states with highest number of
+        offences
+        param output_file_path: output file path
+        param output_file_format: output file format
+        return List of Vehicle Brands'''
+
         top_25_state_df=self.units_df.groupBy('VEH_LIC_STATE_ID').agg(F.count('*').alias('count'))\
                                                                     .orderBy(F.col('count').desc()).limit(25)
         state_list=[a[0] for a in top_25_state_df.collect()]
@@ -124,7 +157,7 @@ class CarCrashAnalysis:
 
         top_vehicle_brands_df=join_df.groupBy('VEH_MAKE_ID').agg(F.count('*').alias('count')).orderBy(F.col('count').desc()).limit(5)
         utils.write_output(top_vehicle_brands_df,output_file_path,output_file_format)
-        print ([a[0] for a in top_vehicle_brands_df.select('VEH_MAKE_ID').collect()])
+        return ([a[0] for a in top_vehicle_brands_df.select('VEH_MAKE_ID').collect()])
 
 if __name__=="__main__":
     
